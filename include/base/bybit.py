@@ -5,6 +5,7 @@ try:
     import sys
     import pandas as pd
     from datetime import datetime, timezone
+    import concurrent.futures
     # To scrap option chain
     from selenium import webdriver
     from selenium.webdriver.chrome.service import Service
@@ -59,7 +60,10 @@ class ByBitManager:
             print("*** TEST ***")
             self.client = bybit.bybit(test=False, api_key=settings.api_key, api_secret=settings.api_secret)
 
-    def get_ohlc_data(self):
+
+    def get_ohlc_data(self, symbol=''):
+        if symbol == '':
+            symbol = self.symbol
 
         time_format = '%Y-%m-%d %H:%M:%S'
 
@@ -70,7 +74,7 @@ class ByBitManager:
         start_date = int(datetime.strptime(start_date_str, time_format).replace(tzinfo=timezone.utc).timestamp())
 
         # Call the kline endpoint with the symbol, interval, and limit parameters
-        response = self.client.Kline.Kline_get(symbol=self.symbol, interval=self.timeframe, **{'from':start_date, 'limit':90}).result()
+        response = self.client.Kline.Kline_get(symbol=symbol, interval=self.timeframe, **{'from':start_date, 'limit':50}).result()
 
         # Extract the OHLC data from the response
         ohlc_data = response[0]['result']
@@ -78,8 +82,27 @@ class ByBitManager:
 
         return data
 
-    def order(self):
-        pass
+
+    def get_ohlc_data_parallel(self, symbols):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Create a list of futures for each symbol
+            futures = [executor.submit(self.get_ohlc_data, symbol) for symbol in symbols]
+
+            # Wait for all the futures to complete and get the results
+            results = [future.result() for future in concurrent.futures.as_completed(futures)]
+
+        # Merge the data for all symbols into a single DataFrame
+        data = pd.concat(results, keys=symbols, names=['symbol', 'datetime'])
+
+        return data
+
+    def get_order_book(self, symbol=''):
+        if symbol == '':
+            symbol = self.symbol
+        client = bybit.bybit(test=False, api_key='', api_secret='')
+        order_book = client.Market.Market_orderbook(symbol=symbol).result()
+
+        return order_book
 
     def is_float(self, num):
         try:

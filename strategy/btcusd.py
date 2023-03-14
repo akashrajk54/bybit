@@ -29,17 +29,13 @@ manager = ByBitManager(
                     )
 
 
-data = manager.get_ohlc_data()
+# symbols = ['BTCUSD', 'ETHUSD', 'BITUSD', 'SOLUSD', 'XRPUSD']
+# data = manager.get_ohlc_data_parallel(symbols)
 
-print('---')
+# data['open_time'] = [datetime.datetime.fromtimestamp(int(ts), tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') for ts in data['open_time']]
 
-data['open_time'] = [datetime.datetime.fromtimestamp(int(ts), tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S') for ts in data['open_time']]
+# print(data)
 
-print(data)
-
-print('---')
-
-sp = manager.scrap_options_alert(symbol_name='NIFTY')
-print('sp: ')
-print(sp)
-
+# order_book = manager.get_order_book()
+# print('order_book: ')
+# print(order_book)
